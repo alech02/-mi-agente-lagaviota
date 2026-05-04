@@ -5,7 +5,7 @@ import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from dotenv import load_dotenv
 
 from agent.brain import generar_respuesta
@@ -85,8 +85,16 @@ async def webhook_handler(request: Request):
 
             logger.info(f"Respuesta a {msg.telefono}: {respuesta}")
 
-        return {"status": "ok"}
+        # Twilio espera respuesta TwiML vacía (no JSON)
+        return Response(
+            content="<?xml version='1.0' encoding='UTF-8'?><Response></Response>",
+            media_type="text/xml"
+        )
 
     except Exception as e:
         logger.error(f"Error en webhook: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return Response(
+            content="<?xml version='1.0' encoding='UTF-8'?><Response></Response>",
+            media_type="text/xml",
+            status_code=200
+        )
